@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>4SP - DOOM</title>
 
+  <!-- The core js-dos API -->
   <script type="text/javascript" src="js-dos-api.js"></script>
   
   <style>
+    /* Make the game fill the entire browser viewport */
     html, body {
         margin: 0;
         padding: 0;
@@ -16,117 +18,74 @@
         overflow: hidden; /* No scrollbars */
         background: #000; /* Black background */
     }
+    
+    /* Container for the DOSBox instance */
     #DOOM {
         width: 100%;
         height: 100%;
         position: relative; /* For the overlay */
     }
+    
+    /* Ensure the js-dos canvas and container fill our #DOOM div */
     #DOOM > .dosbox-container,
     #DOOM canvas {
         width: 100% !important;
         height: 100% !important;
         margin: 0;
     }
+    
+    /* Styling for the loading overlay */
     #DOOM > .dosbox-container > .dosbox-overlay {
-        /* Changed to a local file path */
-        background: url("DOOM.png");
+        background: url("DOOM.png"); /* Local splash screen */
         background-size: cover;
         background-position: center;
     }
+    
+    /* Hide the default js-dos start button, as we will click it with code */
     #DOOM .dosbox-start {
         display: none !important;
-    }
-    
-    /* --- Custom Controls --- */
-    .custom-controls-overlay {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 100;
-        display: flex;
-        gap: 8px;
-    }
-    .game-action-btn {
-        width: 36px;
-        height: 36px;
-        background-color: rgba(30, 30, 30, 0.3);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: white;
-        transition: all 0.3s ease;
-    }
-    .game-action-btn:hover {
-        transform: scale(1.15);
-        background: rgba(0, 0, 0, 0.5);
-    }
-    #customPlayBtn::after {
-        content: '';
-        display: block;
-        width: 0;
-        height: 0;
-        border-top: 8px solid transparent;
-        border-bottom: 8px solid transparent;
-        border-left: 14px solid white;
-        margin-left: 4px;
-    }
-    #fullscreen_DOOM svg {
-        width: 20px;
-        height: 20px;
     }
   </style>
 </head>
 
 <body>
-
+    <!-- The only element in the body is the game container -->
     <div id="DOOM" class="dosbox-default"></div>
-    <div class="custom-controls-overlay">
-        <button id="customPlayBtn" class="game-action-btn" title="Play Game"></button>
-        <a id="fullscreen_DOOM" href="javascript:void(0);" class="game-action-btn" title="Fullscreen">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-        </a>
-    </div>
 
   <script>
     // --- JS-DOS DOOM Initialization ---
     var dosbox_DOOM = new Dosbox({
         id: "DOOM",
         onload: function(dosbox) {
+            // This runs after the user "clicks" play (which we do automatically)
             dosbox.run("DOOM-@evilution.zip", "./DOOM/DOOM.EXE");
         }
     });
 
-    // --- NEW: SILENT STARTUP LOGIC ---
+    // --- SILENT STARTUP LOGIC ---
+    // This logic prevents the loud static sound at the beginning
+    // by muting the audio context before the game starts
+    // and restoring it after a delay.
+    
     const originalAudioContext = window.AudioContext || window.webkitAudioContext;
     let modifiedAudioContexts = [];
 
-    // This function intercepts AudioContext creation and routes it through a muted GainNode.
+    /**
+     * Intercepts AudioContext creation and routes it through a muted GainNode.
+     */
     function engageSilentProcessing() {
         if (!originalAudioContext) {
             console.warn("Web Audio API not supported. Cannot apply silent processing.");
             return;
         }
 
-        // We define a temporary, custom class that modifies the audio output.
         class SilentAudioContext extends originalAudioContext {
             constructor(options) {
-                super(options); // Create the actual AudioContext.
-
-                // Create a GainNode, which acts as a volume control.
+                super(options);
                 const masterGain = this.createGain();
-                // Set the initial volume to 0 (silent).
                 masterGain.gain.setValueAtTime(0, this.currentTime);
-                // Connect our volume control to the actual speakers.
                 masterGain.connect(super.destination);
 
-                // IMPORTANT: We overwrite the 'destination' property.
-                // Now, when the game tries to connect its sound to the 'destination',
-                // it's actually connecting to our masterGain node instead of the speakers.
                 Object.defineProperty(this, 'destination', {
                     value: masterGain,
                     writable: false,
@@ -137,71 +96,73 @@
             }
         }
         
-        // Overwrite the global constructor. Any script that now tries to create
-        // an AudioContext will get our silent version instead.
         window.AudioContext = SilentAudioContext;
         window.webkitAudioContext = SilentAudioContext;
         console.log("Global AudioContext has been temporarily overwritten to enforce silent startup.");
     }
 
-    // This function restores the audio output and original browser functionality.
+    /**
+     * Restores the audio output and original browser functionality.
+     */
     function restoreAudioOutput() {
         if (!originalAudioContext) return;
 
-        // Turn the volume back up on all the contexts we modified.
         modifiedAudioContexts.forEach(context => {
-            // The 'destination' is our GainNode. We access its 'gain' property.
             if (context.destination && typeof context.destination.gain?.setValueAtTime === 'function') {
                 context.destination.gain.setValueAtTime(1, context.currentTime);
                 console.log("Restored volume for a modified AudioContext.");
             }
         });
-        modifiedAudioContexts = []; // Clear the array for next use.
+        modifiedAudioContexts = [];
 
-        // Restore the original AudioContext constructor to the window.
         window.AudioContext = originalAudioContext;
         window.webkitAudioContext = originalAudioContext;
         console.log("Global AudioContext has been restored.");
     }
 
-    // --- Custom Controls Logic ---
-    const customPlayBtn = document.getElementById('customPlayBtn');
-    if (customPlayBtn) {
-        customPlayBtn.addEventListener('click', () => {
-            // 1. Engage silent processing BEFORE starting the game.
-            console.log("Play button pressed. Engaging silent processing for 15 seconds.");
-            engageSilentProcessing();
-            
-            // 2. Start the game by clicking the original button.
-            // When js-dos runs, it will use our SilentAudioContext constructor.
-            const originalStartBtn = document.querySelector('#DOOM .dosbox-start');
-            if (originalStartBtn) {
-                originalStartBtn.click();
-            }
-            
-            // Hide the custom play button.
-            customPlayBtn.style.display = 'none';
-
-            // 3. Set a timer to restore audio output after 15 seconds.
+    // --- Auto-start logic ---
+    // This IIFE (Immediately Invoked Function Expression) runs right away.
+    (function() {
+        console.log("Attempting auto-start...");
+        
+        // 1. Engage silent processing BEFORE starting the game.
+        console.log("Engaging silent processing for 15 seconds.");
+        engageSilentProcessing();
+        
+        // 2. Find and click the original js-dos start button.
+        // This button is created by the 'new Dosbox' call above.
+        const originalStartBtn = document.querySelector('#DOOM .dosbox-start');
+        
+        if (originalStartBtn) {
+            originalStartBtn.click();
+            console.log("Auto-start click sent.");
+        } else {
+            console.error("Auto-start failed: .dosbox-start button not found immediately.");
+            // Fallback: try again after a short delay, just in case.
             setTimeout(() => {
-                console.log("15 seconds have passed. Restoring audio output.");
-                restoreAudioOutput();
-
-                // As a fallback, also call the js-dos unmute function in case it tracks its own state.
-                if (dosbox_DOOM && typeof dosbox_DOOM.unmute === 'function') {
-                    dosbox_DOOM.unmute();
+                const delayedStartBtn = document.querySelector('#DOOM .dosbox-start');
+                if (delayedStartBtn) {
+                    delayedStartBtn.click();
+                    console.log("Delayed auto-start click sent.");
+                } else {
+                    console.error("Delayed auto-start also failed.");
                 }
-            }, 15000);
-        });
-    }
+            }, 500); // 500ms delay
+        }
+        
+        // 3. Set a timer to restore audio output after 15 seconds.
+        setTimeout(() => {
+            console.log("15 seconds have passed. Restoring audio output.");
+            restoreAudioOutput();
 
-    const fullscreenButton = document.getElementById("fullscreen_DOOM");
-    if (fullscreenButton) {
-        fullscreenButton.addEventListener("click", (e) => {
-            e.preventDefault();
-            dosbox_DOOM.requestFullScreen();
-        });
-    }
+            // As a fallback, also call the js-dos unmute function
+            if (dosbox_DOOM && typeof dosbox_DOOM.unmute === 'function') {
+                dosbox_DOOM.unmute();
+            }
+        }, 15000);
+    })();
+    // --- End Auto-start logic ---
+
   </script>
 </body>
 </html>
