@@ -1,19 +1,33 @@
 <!DOCTYPE html>
 <html lang="en-us">
-
-  <head>
- 
+<head>
   <title>4SP - DOOM</title>
-    
-  <!-- CSS -->
-  <link rel="stylesheet" href="app.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
-
   <link rel="manifest" href="site.webmanifest">
-    
+  <script type="text/javascript" src="js-dos-v3.js"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden; /* Prevent scrolling */
+      background-color: #000;
+    }
+    #DOOM, .dosbox-container {
+      width: 100vw;
+      height: 100vh;
+    }
+    .dosbox-overlay {
+        background: url("DOOM.png") no-repeat center center fixed;
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+    }
+  </style>
+</head>
+<body>
   <div id="DOOM" class="dosbox-default"></div>
-  <script type="text/javascript" src="js-dos-api.js"></script>
   <script type="text/javascript">
     Dos(document.getElementById("DOOM"), {
       wdosboxUrl: "js-dos-v3.js",
