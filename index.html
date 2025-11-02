@@ -18,8 +18,13 @@
   <body style="background-color:#121212; color: white">
    
 <style>
-    #DOOM > .dosbox-container { width: 640px; height: 400px; }
-    #DOOM > .dosbox-container > .dosbox-overlay { background: url("DOOM.png"); }
+#DOOM > .dosbox-container {
+    width: 100vw;
+    height: 100vh;
+    margin: 0; /* Remove default body margin */
+    padding: 0;
+}
+  #DOOM > .dosbox-container > .dosbox-overlay { background: url("DOOM.png"); }
     #DOOM > .dosbox-container > .dosbox-overlay > .dosbox-start {
         border-radius: 17px 17px 17px 17px;
         -moz-border-radius: 17px 17px 17px 17px;
