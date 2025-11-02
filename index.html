@@ -4,7 +4,7 @@
   <title>4SP - DOOM</title>
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <script src="https://js-dos.com/v7/js-dos.js"></script>
+  <script src="https://js-dos.com/v7/js-dos.js" defer></script>
   <style>
     body, html {
       margin: 0;
@@ -23,11 +23,13 @@
 <body>
   <div id="DOOM"></div>
   <script>
-    Dos(document.getElementById("DOOM"), {
-        wdosboxUrl: "https://js-dos.com/v7/wdosbox.js",
-    }).ready((fs, main) => {
-      fs.extract("DOOM-@evilution.zip").then(() => {
-        main(["-c", "DOOM.EXE -iwad DOOM.WAD"]);
+    window.addEventListener("js-dos:ready", () => {
+      Dos(document.getElementById("DOOM"), {
+          wdosboxUrl: "https://js-dos.com/v7/wdosbox.js",
+      }).ready((fs, main) => {
+        fs.extract("DOOM-@evilution.zip").then(() => {
+          main(["-c", "DOOM.EXE -iwad DOOM.WAD"]);
+        });
       });
     });
   </script>
