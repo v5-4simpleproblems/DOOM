@@ -12,34 +12,8 @@
 
   <link rel="manifest" href="site.webmanifest">
     
-  <script type="text/javascript" src="js-dos-api.js"></script>
-
-
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      overflow: hidden; /* Prevent scrolling */
-      background-color: #000;
-    }
-    #DOOM, .dosbox-container {
-      width: 100vw;
-      height: 100vh;
-    }
-    .dosbox-overlay {
-        background: url("DOOM.png") no-repeat center center fixed;
-        -webkit-background-size: cover;
-        -moz-background-size: cover;
-        -o-background-size: cover;
-        background-size: cover;
-        display: none; /* Hide the overlay by default */
-    }
-  </style>
-</head>
-<body>
   <div id="DOOM" class="dosbox-default"></div>
+  <script type="text/javascript" src="js-dos-api.js"></script>
   <script type="text/javascript">
     Dos(document.getElementById("DOOM"), {
       wdosboxUrl: "js-dos-v3.js",
