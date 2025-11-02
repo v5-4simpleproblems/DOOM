@@ -41,15 +41,13 @@
 <body>
   <div id="DOOM" class="dosbox-default"></div>
   <script type="text/javascript">
-  var dosbox_DOOM = new Dosbox({
-    id: "DOOM",
-    onload: function (dosbox) {
-      dosbox_DOOM.run("DOOM-@evilution.zip", "./DOOM/DOOM.EXE");
-    },
-    onrun: function (dosbox, app) {
-      console.log("App '" + app + "' is runned");
-    }
-  });
-</script>
+    Dos(document.getElementById("DOOM"), {
+      wdosboxUrl: "js-dos-v3.js",
+    }).ready((fs, main) => {
+      fs.extract("DOOM-@evilution.zip").then(() => {
+        main(["-c", "DOOM.EXE -iwad DOOM.WAD"]);
+      });
+    });
+  </script>
 </body>
 </html>
